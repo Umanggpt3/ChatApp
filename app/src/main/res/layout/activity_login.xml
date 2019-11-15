@@ -48,13 +48,24 @@
             tools:ignore="HardcodedText" />
 
         <Button
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:text="Login"
             android:id="@+id/btn_login"
             android:background="@color/colorPrimaryDark"
             android:layout_marginTop="10dp"
             android:textColor="#fff"
+            tools:ignore="HardcodedText" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/forgot_password"
+            android:text="Forgot Password?"
+            android:textStyle="bold"
+            android:layout_gravity="end"
+            android:layout_marginTop="10dp"
+            android:textColor="@color/colorPrimaryDark"
             tools:ignore="HardcodedText" />
 
     </LinearLayout>

@@ -7,14 +7,18 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
 import com.example.chatapp.Adapter.UserAdapter;
 import com.example.chatapp.Model.Chat;
+import com.example.chatapp.Model.Chatlist;
 import com.example.chatapp.Model.User;
+import com.example.chatapp.Notifications.Token;
 import com.example.chatapp.R;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
@@ -22,9 +26,13 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+import com.google.firebase.iid.FirebaseInstanceId;
+import com.google.firebase.iid.InstanceIdResult;
+import com.google.firebase.messaging.FirebaseMessaging;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class ChatsFragment extends Fragment {
 
@@ -36,7 +44,7 @@ public class ChatsFragment extends Fragment {
     private FirebaseUser fuser;
     private DatabaseReference reference;
 
-    private List<String> usersList;
+    private List<Chatlist> usersList;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -52,29 +60,17 @@ public class ChatsFragment extends Fragment {
 
         usersList = new ArrayList<>();
 
-        reference = FirebaseDatabase.getInstance().getReference("Chats");
-
+        reference = FirebaseDatabase.getInstance().getReference("Chatlist").child(fuser.getUid());
         reference.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                 usersList.clear();
-
-                for(DataSnapshot snapshot : dataSnapshot.getChildren()) {
-                    Chat chat = snapshot.getValue(Chat.class);
-
-                    assert chat != null;
-                    if(chat.getSender().equals(fuser.getUid())) {
-                        usersList.add(chat.getReceiver());
-                    }
-
-                    if(chat.getReceiver().equals(fuser.getUid())) {
-                        usersList.add(chat.getSender());
-                    }
-
+                for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
+                    Chatlist chatlist = snapshot.getValue(Chatlist.class);
+                    usersList.add(chatlist);
                 }
 
-                readChats();
-
+                chatList();
             }
 
             @Override
@@ -82,43 +78,46 @@ public class ChatsFragment extends Fragment {
 
             }
         });
+
+        FirebaseMessaging.getInstance().setAutoInitEnabled(true);
+
+        FirebaseInstanceId.getInstance().getInstanceId().addOnSuccessListener(new OnSuccessListener<InstanceIdResult>() {
+            @Override
+            public void onSuccess(InstanceIdResult instanceIdResult) {
+                Log.d("0000000","CF onSuccess ");
+                String newToken = instanceIdResult.getToken();
+                updateToken(newToken);
+            }
+        });
+
+        //updateToken(FirebaseInstanceId.getInstance().getInstanceId().getResult().getToken());
 
         return view;
     }
 
-    private void readChats() {
+    private void updateToken(String token) {
+        DatabaseReference reference = FirebaseDatabase.getInstance().getReference("Tokens");
+        Token token1 = new Token(token);
+        reference.child(fuser.getUid()).setValue(token1);
+    }
+
+    private void chatList() {
         mUsers = new ArrayList<>();
-
         reference = FirebaseDatabase.getInstance().getReference("Users");
-
         reference.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                 mUsers.clear();
-
                 for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
                     User user = snapshot.getValue(User.class);
-
-                    for (String id : usersList) {
-                        assert user != null;
-                        if (user.getId().equals(id)) {
-                            if (mUsers.size() != 0) {
-                                for (int i = 0; i< mUsers.size(); i++) {
-                                    User user1 = mUsers.get(i);
-                                    if (!user.getId().equals(user1.getId())) {
-                                        mUsers.add(user);
-                                    }
-                                }
-                            } else {
-                                mUsers.add(user);
-                            }
+                    for (Chatlist chatlist : usersList) {
+                        if (user.getId().equals(chatlist.getId())) {
+                            mUsers.add(user);
                         }
                     }
                 }
-
-                userAdapter = new UserAdapter(getContext(), mUsers);
+                userAdapter = new UserAdapter(getContext(), mUsers, true);
                 recyclerView.setAdapter(userAdapter);
-
             }
 
             @Override
@@ -127,5 +126,4 @@ public class ChatsFragment extends Fragment {
             }
         });
     }
-
 }

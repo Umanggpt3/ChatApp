@@ -3,13 +3,23 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#201E1E"
+    android:background="#fff"
     tools:context=".Fragments.UsersFragment">
 
+    <EditText
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="5dp"
+        android:hint="Search..."
+        android:textColorHint="@color/colorPrimaryDark"
+        android:textColor="@color/colorPrimaryDark"
+        android:id="@+id/search_users"
+        tools:ignore="Autofill,HardcodedText,TextFields" />
+    
     <androidx.recyclerview.widget.RecyclerView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:id="@+id/recycler_view"
-        />
+        android:layout_below="@+id/search_users"
+        android:id="@+id/recycler_view" />
 
 </RelativeLayout>
